@@ -118,6 +118,22 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+
+
+
+.banner-swiper .swiper-button-next,
+.banner-swiper .swiper-button-prev {
+  color: #000000;
+  width: 35px;
+  height: 35px;
+}
+
+.banner-swiper .swiper-button-next::after,
+.banner-swiper .swiper-button-prev::after {
+  font-size: 20px;
+  font-weight: bold;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
