@@ -14,11 +14,50 @@ const AddBookPage = () => {
 
 
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
 
-    console.log(bookData);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const newBook = {
+    ...bookData,
+    addedBy: {
+      name: "Test User",
+      email: "test@example.com",
+    },
+  };
+
+  try {
+    const response = await fetch("http://localhost:5000/books", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newBook),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert("Book Added Successfully!");
+
+      setBookData({
+        title: "",
+        author: "",
+        category: "",
+        image: "",
+        description: "",
+        totalCopies: "",
+      });
+    } else {
+      alert(data.message || "Failed to add book");
+    }
+  } catch (error) {
+    console.error("Error adding book:", error);
+  }
 };
+
+
+
 
   return (
     <section className="min-h-screen bg-[#101714] px-4 py-12 text-white">
