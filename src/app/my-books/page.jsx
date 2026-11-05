@@ -7,7 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { getTokenFromClient } from "@/lib/get-token-client";
 import Link from "next/link";
 
-const API_URL = "http://localhost:5000";
+const API_URL = "https://booknook-server-tawny.vercel.app";
 
 const emptyForm = {
   title: "",

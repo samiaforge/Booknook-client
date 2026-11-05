@@ -8,7 +8,7 @@ const NewArrivals = () => {
   const [books, setBooks] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/books?limit=6")
+    fetch("https://booknook-server-tawny.vercel.app/books?limit=6")
       .then((res) => res.json())
       .then((data) => {
         setBooks(data);

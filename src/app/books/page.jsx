@@ -12,7 +12,7 @@ const BooksPage = () => {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await fetch("http://localhost:5000/books");
+        const response = await fetch("https://booknook-server-tawny.vercel.app/books");
         const data = await response.json();
 
         setBooks(data);
