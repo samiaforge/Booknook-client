@@ -2,6 +2,8 @@
 import { betterAuth } from "better-auth";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
+import { jwt } from "better-auth/plugins";
+
 
 const uri = process.env.DB_URI;
 const dbName = process.env.DB_NAME;
@@ -36,4 +38,13 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     },
   },
+
+  plugins: [
+  jwt({
+    jwt: {
+      issuer: process.env.BETTER_AUTH_URL,
+      audience: process.env.BETTER_AUTH_URL,
+    },
+  }),
+],
 });
