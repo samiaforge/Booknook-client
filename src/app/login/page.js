@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -12,39 +13,73 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Get the page where the user wanted to go
+  const getDestination = () => {
+    const params = new URLSearchParams(window.location.search);
+    const callbackUrl = params.get("callbackUrl");
+
+    if (
+      callbackUrl &&
+      callbackUrl.startsWith("/") &&
+      !callbackUrl.startsWith("//")
+    ) {
+      return callbackUrl;
+    }
+
+    return "/";
+  };
+
+
+
+  // Email and Password Login
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const { error } = await authClient.signIn.email({
-      email,
-      password,
-    });
+    try {
+      const { error } = await authClient.signIn.email({
+        email,
+        password,
+      });
 
-    setLoading(false);
+      if (error) {
+        setError(error.message);
+        return;
+      }
 
-    if (error) {
-      setError(error.message);
-      return;
+      router.push(getDestination());
+      router.refresh();
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/");
-    router.refresh();
   };
 
+  // Google Login
   const handleGoogleLogin = async () => {
     setError("");
 
-    const { error } = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: "/",
-    });
+    const destination = getDestination();
 
-    if (error) {
-      setError(error.message);
+    try {
+      const { error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: destination,
+      });
+
+      if (error) {
+        setError(error.message);
+      }
+    } catch (err) {
+      setError("Google login failed. Please try again.");
     }
   };
+
+
+
+  
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#101714] px-4 py-10">
@@ -106,6 +141,7 @@ const LoginPage = () => {
         </div>
 
         <button
+          type="button"
           onClick={handleGoogleLogin}
           className="w-full rounded-lg border border-gray-500 py-3 text-white hover:bg-[#26332c]"
         >

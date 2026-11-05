@@ -1,5 +1,6 @@
 "use client";
 
+import PrivateRoute from "@/components/PrivateRoute";
 import { useState } from "react";
 
 const AddBookPage = () => {
@@ -60,6 +61,7 @@ const handleSubmit = async (e) => {
 
 
   return (
+    <PrivateRoute>
     <section className="min-h-screen bg-[#101714] px-4 py-12 text-white">
       <div className="mx-auto max-w-3xl">
         {/* Heading */}
@@ -229,6 +231,7 @@ const handleSubmit = async (e) => {
         </form>
       </div>
     </section>
+    </PrivateRoute>
   );
 };
 

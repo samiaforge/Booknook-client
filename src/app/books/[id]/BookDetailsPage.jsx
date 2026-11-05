@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import PrivateRoute from "@/components/PrivateRoute";
 
 const BookDetailsPage = () => {
   const { id } = useParams();
@@ -116,6 +117,7 @@ const handleBorrow = async () => {
 
 
   return (
+    <PrivateRoute>
     <main className="min-h-screen bg-[#101714] px-4 py-16 text-white md:px-10 lg:px-20">
       <div className="mx-auto grid max-w-6xl gap-10 rounded-xl border border-white/10 bg-[#19231E] p-6 md:grid-cols-2 md:p-10">
         <div>
@@ -204,6 +206,7 @@ const handleBorrow = async () => {
         </div>
       )}
     </main>
+    </PrivateRoute>
   );
 };
 
