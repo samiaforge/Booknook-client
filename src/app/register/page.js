@@ -57,8 +57,8 @@ const RegisterPage = () => {
       return;
     }
 
-    router.push("/");
-    router.refresh();
+    router.push("/login");
+router.refresh();
   };
 
   const handleGoogleLogin = async () => {
@@ -73,11 +73,11 @@ const RegisterPage = () => {
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#101714] px-4 py-10">
       <div className="w-full max-w-md rounded-2xl bg-[#19231E] p-8">
-        <h1 className="mb-2 text-3xl font-bold text-white">
+        <h1 className="mb-2 text-3xl font-bold text-white text-center">
           Create Account
         </h1>
 
-        <p className="mb-6 text-gray-400">
+        <p className="mb-6 text-gray-400 text-center">
           Join the BookNook community.
         </p>
 
