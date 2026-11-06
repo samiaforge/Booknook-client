@@ -212,7 +212,7 @@ const Navbar = () => {
                 </div>
 
                 <Link
-                  href="/my-profile"
+                  href="/profile"
                   onClick={closeMenu}
                   className="text-sm text-[#F3EFE4]"
                 >
