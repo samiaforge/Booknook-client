@@ -13,7 +13,7 @@ const ForgotPasswordPage = () => {
           Enter your email to reset your password.
         </p>
 
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-5">
+        <div className="space-y-5">
           <div>
             <label className="mb-2 block text-sm text-white">
               Email Address
@@ -28,12 +28,12 @@ const ForgotPasswordPage = () => {
           </div>
 
           <button
-            type="submit"
+            type="button"
             className="w-full rounded-lg bg-[#f6e262] py-3 font-semibold text-black hover:bg-[#e9d44e] transition"
           >
             Reset Password
           </button>
-        </form>
+        </div>
 
         <p className="mt-6 text-center text-sm text-gray-400">
           Remember your password?{" "}
