@@ -5,6 +5,7 @@ import PrivateRoute from "@/components/PrivateRoute";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { getTokenFromClient } from "@/lib/get-token-client";
+import toast from "react-hot-toast";
 
 const AddBookPage = () => {
   const { data: session, isPending } = authClient.useSession();
@@ -19,76 +20,77 @@ const AddBookPage = () => {
     totalCopies: "",
   });
 
-  const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
 
     if (!user) {
-      setMessage("Please login first.");
-      return;
-    }
+      toast.error("Please login first.");
+    } else {
+      try {
+        setIsSubmitting(true);
 
-    try {
-      setIsSubmitting(true);
+        const token = await getTokenFromClient();
 
-      const token = await getTokenFromClient();
+        if (!token) {
+          throw new Error("Authentication failed. Please login again.");
+        }
 
-      if (!token) {
-        setMessage("Authentication failed. Please login again.");
-        return;
+        const newBook = {
+          ...bookData,
+          addedBy: {
+            name: user.name,
+            email: user.email,
+          },
+        };
+
+        const response = await fetch(
+          "https://booknook-server-tawny.vercel.app/books",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(newBook),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to add book");
+        }
+
+        toast.success("Book added successfully!");
+
+        setBookData({
+          title: "",
+          author: "",
+          category: "",
+          image: "",
+          description: "",
+          totalCopies: "",
+        });
+      } catch (error) {
+        console.error("Error adding book:", error);
+        toast.error(error.message || "Something went wrong.");
+      } finally {
+        setIsSubmitting(false);
       }
-
-      const newBook = {
-        ...bookData,
-        addedBy: {
-          name: user.name,
-          email: user.email,
-        },
-      };
-
-      const response = await fetch("https://booknook-server-tawny.vercel.app/books", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(newBook),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to add book");
-      }
-
-      setMessage("Book Added Successfully!");
-
-      setBookData({
-        title: "",
-        author: "",
-        category: "",
-        image: "",
-        description: "",
-        totalCopies: "",
-      });
-
-    } catch (error) {
-      console.error("Error adding book:", error);
-      setMessage(error.message || "Something went wrong.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
+
+
+
+  
 
   return (
     <PrivateRoute>
       <section className="min-h-screen bg-[#101714] px-4 py-12 text-white">
         <div className="mx-auto max-w-3xl">
 
-          {/* Heading */}
           <div className="mb-8 text-center">
             <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-[#f6e262]">
               BookNook Library
@@ -103,13 +105,11 @@ const AddBookPage = () => {
             </p>
           </div>
 
-          {/* Form */}
           <form
             onSubmit={handleSubmit}
             className="space-y-6 rounded-2xl border border-white/10 bg-[#19231E] p-6 shadow-xl md:p-8"
           >
 
-            {/* Book Title */}
             <div>
               <label className="mb-2 block text-sm font-medium">
                 Book Title
@@ -120,17 +120,13 @@ const AddBookPage = () => {
                 placeholder="Enter book title"
                 value={bookData.title}
                 onChange={(e) =>
-                  setBookData({
-                    ...bookData,
-                    title: e.target.value,
-                  })
+                  setBookData({ ...bookData, title: e.target.value })
                 }
                 required
                 className="w-full rounded-lg border border-white/10 bg-[#101714] px-4 py-3 text-white outline-none focus:border-[#f6e262]"
               />
             </div>
 
-            {/* Author and Category */}
             <div className="grid gap-6 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium">
@@ -142,10 +138,7 @@ const AddBookPage = () => {
                   placeholder="Enter author name"
                   value={bookData.author}
                   onChange={(e) =>
-                    setBookData({
-                      ...bookData,
-                      author: e.target.value,
-                    })
+                    setBookData({ ...bookData, author: e.target.value })
                   }
                   required
                   className="w-full rounded-lg border border-white/10 bg-[#101714] px-4 py-3 outline-none focus:border-[#f6e262]"
@@ -160,10 +153,7 @@ const AddBookPage = () => {
                 <select
                   value={bookData.category}
                   onChange={(e) =>
-                    setBookData({
-                      ...bookData,
-                      category: e.target.value,
-                    })
+                    setBookData({ ...bookData, category: e.target.value })
                   }
                   required
                   className="w-full rounded-lg border border-white/10 bg-[#101714] px-4 py-3 text-gray-300 outline-none focus:border-[#f6e262]"
@@ -180,7 +170,6 @@ const AddBookPage = () => {
               </div>
             </div>
 
-            {/* Image URL */}
             <div>
               <label className="mb-2 block text-sm font-medium">
                 Book Image URL
@@ -191,17 +180,13 @@ const AddBookPage = () => {
                 placeholder="Paste uploaded image URL"
                 value={bookData.image}
                 onChange={(e) =>
-                  setBookData({
-                    ...bookData,
-                    image: e.target.value,
-                  })
+                  setBookData({ ...bookData, image: e.target.value })
                 }
                 required
                 className="w-full rounded-lg border border-white/10 bg-[#101714] px-4 py-3 outline-none focus:border-[#f6e262]"
               />
             </div>
 
-            {/* Description */}
             <div>
               <label className="mb-2 block text-sm font-medium">
                 Short Description
@@ -212,17 +197,13 @@ const AddBookPage = () => {
                 placeholder="Write a short description about the book..."
                 value={bookData.description}
                 onChange={(e) =>
-                  setBookData({
-                    ...bookData,
-                    description: e.target.value,
-                  })
+                  setBookData({ ...bookData, description: e.target.value })
                 }
                 required
                 className="w-full resize-none rounded-lg border border-white/10 bg-[#101714] px-4 py-3 outline-none focus:border-[#f6e262]"
               />
             </div>
 
-            {/* Total Copies */}
             <div>
               <label className="mb-2 block text-sm font-medium">
                 Total Copies
@@ -235,17 +216,13 @@ const AddBookPage = () => {
                 placeholder="Enter total copies"
                 value={bookData.totalCopies}
                 onChange={(e) =>
-                  setBookData({
-                    ...bookData,
-                    totalCopies: e.target.value,
-                  })
+                  setBookData({ ...bookData, totalCopies: e.target.value })
                 }
                 required
                 className="w-full rounded-lg border border-white/10 bg-[#101714] px-4 py-3 outline-none focus:border-[#f6e262]"
               />
             </div>
 
-            {/* Added By */}
             <div className="grid gap-6 rounded-xl border border-white/10 bg-[#101714] p-4 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm text-gray-400">
@@ -254,9 +231,7 @@ const AddBookPage = () => {
 
                 <input
                   type="text"
-                  value={
-                    isPending ? "Loading user..." : user?.name || ""
-                  }
+                  value={isPending ? "Loading user..." : user?.name || ""}
                   readOnly
                   className="w-full rounded-lg border border-white/10 bg-[#19231E] px-4 py-3 text-gray-400"
                 />
@@ -269,23 +244,13 @@ const AddBookPage = () => {
 
                 <input
                   type="email"
-                  value={
-                    isPending ? "Loading email..." : user?.email || ""
-                  }
+                  value={isPending ? "Loading email..." : user?.email || ""}
                   readOnly
                   className="w-full rounded-lg border border-white/10 bg-[#19231E] px-4 py-3 text-gray-400"
                 />
               </div>
             </div>
 
-            {/* Success / Error Message */}
-            {message && (
-              <p className="text-center text-sm text-[#f6e262]">
-                {message}
-              </p>
-            )}
-
-            {/* Submit */}
             <button
               type="submit"
               disabled={isSubmitting || isPending}

@@ -6,9 +6,7 @@ import PrivateRoute from "@/components/PrivateRoute";
 import { authClient } from "@/lib/auth-client";
 import { getTokenFromClient } from "@/lib/get-token-client";
 import Link from "next/link";
-
-
-
+import toast from "react-hot-toast";
 
 const API_URL = "https://booknook-server-tawny.vercel.app";
 
@@ -27,7 +25,6 @@ const MyBorrowsPage = () => {
 
   const [borrows, setBorrows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
   const [selectedBorrow, setSelectedBorrow] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -64,7 +61,7 @@ const MyBorrowsPage = () => {
 
         setBorrows(data);
       } catch (error) {
-        setMessage(error.message);
+        toast.error(error.message || "Failed to load borrowed books.");
       } finally {
         setLoading(false);
       }
@@ -79,7 +76,6 @@ const MyBorrowsPage = () => {
 
     try {
       setSubmitting(true);
-      setMessage("");
 
       const token = await getTokenFromClient();
 
@@ -108,9 +104,11 @@ const MyBorrowsPage = () => {
       );
 
       setSelectedBorrow(null);
-      setMessage("Book returned successfully!");
+
+      toast.success("Book returned successfully!");
+
     } catch (error) {
-      setMessage(error.message);
+      toast.error(error.message || "Something went wrong!");
     } finally {
       setSubmitting(false);
     }
@@ -134,12 +132,6 @@ const MyBorrowsPage = () => {
             </p>
           </div>
 
-          {message && (
-            <p className="mb-6 rounded-lg border border-[#f6e262]/20 bg-[#19231E] p-4 text-sm text-[#f6e262]">
-              {message}
-            </p>
-          )}
-
           {loading ? (
             <div className="py-20 text-center text-gray-400">
               <i className="fa-solid fa-spinner fa-spin mr-2"></i>
@@ -157,12 +149,12 @@ const MyBorrowsPage = () => {
                 Explore our collection and find your next read.
               </p>
 
-             <Link
-  href="/books"
-  className="mt-6 inline-block rounded-lg bg-[#f6e262] px-6 py-3 font-semibold text-[#101714] transition hover:bg-yellow-300"
->
-  Browse Books
-</Link>
+              <Link
+                href="/books"
+                className="mt-6 inline-block rounded-lg bg-[#f6e262] px-6 py-3 font-semibold text-[#101714] transition hover:bg-yellow-300"
+              >
+                Browse Books
+              </Link>
             </div>
           ) : (
             <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#19231E]">
@@ -242,7 +234,7 @@ const MyBorrowsPage = () => {
                 <button
                   onClick={() => setSelectedBorrow(null)}
                   disabled={submitting}
-                  className="flex-1 rounded-lg border border-white/20 py-3"
+                  className="flex-1 rounded-lg border border-white/20 py-3 disabled:opacity-50"
                 >
                   Cancel
                 </button>

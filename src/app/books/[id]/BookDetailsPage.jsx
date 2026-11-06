@@ -4,12 +4,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import toast from "react-hot-toast";
+
 import PrivateRoute from "@/components/PrivateRoute";
 import { authClient } from "@/lib/auth-client";
 import { getTokenFromClient } from "@/lib/get-token-client";
-
-
-
 
 const API_URL = "https://booknook-server-tawny.vercel.app";
 
@@ -26,10 +25,6 @@ const BookDetailsPage = () => {
   const [returnDate, setReturnDate] = useState("");
 
   const [borrowing, setBorrowing] = useState(false);
-  const [borrowMessage, setBorrowMessage] = useState("");
-
-
-
 
   // Fetch Book Details
   useEffect(() => {
@@ -45,15 +40,11 @@ const BookDetailsPage = () => {
           throw new Error("Please login again.");
         }
 
-
-
         const response = await fetch(`${API_URL}/books/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
-
 
         const data = await response.json();
 
@@ -86,33 +77,27 @@ const BookDetailsPage = () => {
     };
   }, [id, user, isPending]);
 
-
-
-
   // Borrow Book
   const handleBorrow = async () => {
     if (!returnDate) {
-      setBorrowMessage("Please select a return date.");
+      toast.error("Please select a return date.");
       return;
     }
 
     if (!user) {
-      setBorrowMessage("Please login again.");
+      toast.error("Please login again.");
       return;
     }
 
     try {
       setBorrowing(true);
-      setBorrowMessage("");
 
       const token = await getTokenFromClient();
 
       if (!token) {
-        setBorrowMessage("Your session has expired. Please login again.");
+        toast.error("Your session has expired. Please login again.");
         return;
       }
-
-
 
       const response = await fetch(`${API_URL}/borrows`, {
         method: "POST",
@@ -128,19 +113,15 @@ const BookDetailsPage = () => {
         }),
       });
 
-
-
       const data = await response.json();
 
       if (!response.ok) {
-        setBorrowMessage(data.message || "Failed to borrow book.");
+        toast.error(data.message || "Failed to borrow book.");
         return;
       }
 
       setShowBorrowModal(false);
       setReturnDate("");
-
-      
 
       // Refresh book information
       const updatedResponse = await fetch(`${API_URL}/books/${id}`, {
@@ -154,15 +135,17 @@ const BookDetailsPage = () => {
         setBook(updatedBook);
       }
 
-      setBorrowMessage("Book borrowed successfully!");
+      toast.success("Book borrowed successfully!");
+
     } catch (error) {
       console.error("Borrow Error:", error);
-      setBorrowMessage(error.message || "Something went wrong!");
+      toast.error(error.message || "Something went wrong!");
     } finally {
       setBorrowing(false);
     }
   };
 
+  // Loading State
   if (loading || isPending) {
     return (
       <p className="bg-[#101714] py-20 text-center text-white">
@@ -171,6 +154,7 @@ const BookDetailsPage = () => {
     );
   }
 
+  // Book Not Found
   if (!book) {
     return (
       <div className="min-h-screen bg-[#101714] py-20 text-center text-white">
@@ -183,14 +167,11 @@ const BookDetailsPage = () => {
     );
   }
 
-
-
-
-
   return (
     <PrivateRoute>
       <main className="min-h-screen bg-[#101714] px-4 py-16 text-white md:px-10 lg:px-20">
         <div className="mx-auto grid max-w-6xl gap-10 rounded-xl border border-white/10 bg-[#19231E] p-6 md:grid-cols-2 md:p-10">
+
           <div>
             <img
               src={book.image}
@@ -208,13 +189,19 @@ const BookDetailsPage = () => {
               {book.title}
             </h1>
 
-            <p className="mt-4 text-gray-400">By {book.author}</p>
+            <p className="mt-4 text-gray-400">
+              By {book.author}
+            </p>
 
             <div className="my-6 h-px bg-white/10"></div>
 
-            <h2 className="mb-3 text-lg font-semibold">About This Book</h2>
+            <h2 className="mb-3 text-lg font-semibold">
+              About This Book
+            </h2>
 
-            <p className="leading-7 text-gray-400">{book.description}</p>
+            <p className="leading-7 text-gray-400">
+              {book.description}
+            </p>
 
             <div className="mt-8 space-y-3 text-sm">
               <p>
@@ -234,21 +221,12 @@ const BookDetailsPage = () => {
             </div>
 
             <button
-              onClick={() => {
-                setBorrowMessage("");
-                setShowBorrowModal(true);
-              }}
+              onClick={() => setShowBorrowModal(true)}
               disabled={book.availableCopies === 0}
               className="mt-8 rounded-lg bg-[#f6e262] px-6 py-3 font-bold text-[#101714] transition hover:bg-[#e8d44f] disabled:cursor-not-allowed disabled:bg-gray-500"
             >
               {book.availableCopies > 0 ? "Borrow Book" : "Not Available"}
             </button>
-
-            {borrowMessage && (
-              <p className="mt-4 text-sm text-[#f6e262]">
-                {borrowMessage}
-              </p>
-            )}
           </div>
         </div>
 
@@ -256,11 +234,18 @@ const BookDetailsPage = () => {
         {showBorrowModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
             <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#19231E] p-6">
-              <h2 className="mb-5 text-2xl font-bold">Borrow This Book</h2>
 
-              <p className="mb-4 text-gray-400">{book.title}</p>
+              <h2 className="mb-5 text-2xl font-bold">
+                Borrow This Book
+              </h2>
 
-              <label className="mb-2 block text-sm">Return Date</label>
+              <p className="mb-4 text-gray-400">
+                {book.title}
+              </p>
+
+              <label className="mb-2 block text-sm">
+                Return Date
+              </label>
 
               <input
                 type="date"
@@ -274,9 +259,10 @@ const BookDetailsPage = () => {
                 <button
                   onClick={() => {
                     setShowBorrowModal(false);
-                    setBorrowMessage("");
+                    setReturnDate("");
                   }}
-                  className="w-1/2 rounded-lg border border-white/20 py-3"
+                  disabled={borrowing}
+                  className="w-1/2 rounded-lg border border-white/20 py-3 disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -290,11 +276,6 @@ const BookDetailsPage = () => {
                 </button>
               </div>
 
-              {borrowMessage && (
-                <p className="mt-4 text-center text-sm text-[#f6e262]">
-                  {borrowMessage}
-                </p>
-              )}
             </div>
           </div>
         )}
