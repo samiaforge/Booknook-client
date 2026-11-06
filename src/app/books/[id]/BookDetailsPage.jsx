@@ -8,10 +8,15 @@ import PrivateRoute from "@/components/PrivateRoute";
 import { authClient } from "@/lib/auth-client";
 import { getTokenFromClient } from "@/lib/get-token-client";
 
+
+
+
+const API_URL = "https://booknook-server-tawny.vercel.app";
+
 const BookDetailsPage = () => {
   const { id } = useParams();
 
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
 
   const [book, setBook] = useState(null);
@@ -23,10 +28,76 @@ const BookDetailsPage = () => {
   const [borrowing, setBorrowing] = useState(false);
   const [borrowMessage, setBorrowMessage] = useState("");
 
+
+
+
+  // Fetch Book Details
+  useEffect(() => {
+    if (isPending) return;
+
+    let isMounted = true;
+
+    const fetchBook = async () => {
+      try {
+        const token = await getTokenFromClient();
+
+        if (!token) {
+          throw new Error("Please login again.");
+        }
+
+
+
+        const response = await fetch(`${API_URL}/books/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to load book.");
+        }
+
+        if (isMounted) {
+          setBook(data);
+        }
+      } catch (error) {
+        console.error("Error fetching book:", error);
+
+        if (isMounted) {
+          setBook(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    if (id && user) {
+      fetchBook();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, user, isPending]);
+
+
+
+
   // Borrow Book
   const handleBorrow = async () => {
     if (!returnDate) {
       setBorrowMessage("Please select a return date.");
+      return;
+    }
+
+    if (!user) {
+      setBorrowMessage("Please login again.");
       return;
     }
 
@@ -37,11 +108,13 @@ const BookDetailsPage = () => {
       const token = await getTokenFromClient();
 
       if (!token) {
-        setBorrowMessage("Please login again.");
+        setBorrowMessage("Your session has expired. Please login again.");
         return;
       }
 
-      const response = await fetch("http://localhost:5000/borrows", {
+
+
+      const response = await fetch(`${API_URL}/borrows`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -49,31 +122,32 @@ const BookDetailsPage = () => {
         },
         body: JSON.stringify({
           bookId: id,
-          userName: user?.name,
-          userEmail: user?.email,
-          returnDate: returnDate,
+          userName: user.name,
+          userEmail: user.email,
+          returnDate,
         }),
       });
+
+
 
       const data = await response.json();
 
       if (!response.ok) {
-        setBorrowMessage(data.message || "Failed to borrow book");
+        setBorrowMessage(data.message || "Failed to borrow book.");
         return;
       }
 
       setShowBorrowModal(false);
       setReturnDate("");
 
+      
+
       // Refresh book information
-      const updatedResponse = await fetch(
-        `http://localhost:5000/books/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const updatedResponse = await fetch(`${API_URL}/books/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (updatedResponse.ok) {
         const updatedBook = await updatedResponse.json();
@@ -81,55 +155,15 @@ const BookDetailsPage = () => {
       }
 
       setBorrowMessage("Book borrowed successfully!");
-
     } catch (error) {
-      console.log("Borrow Error:", error);
-      setBorrowMessage("Something went wrong!");
+      console.error("Borrow Error:", error);
+      setBorrowMessage(error.message || "Something went wrong!");
     } finally {
       setBorrowing(false);
     }
   };
 
-  // Fetch Book Details
-  useEffect(() => {
-    const fetchBook = async () => {
-      try {
-        const token = await getTokenFromClient();
-
-        if (!token) {
-          throw new Error("Authentication required");
-        }
-
-        const response = await fetch(
-          `http://localhost:5000/books/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const data = await response.json();
-
-        if (response.ok) {
-          setBook(data);
-        } else {
-          console.error(data.message);
-        }
-
-      } catch (error) {
-        console.log("Error fetching book:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchBook();
-    }
-  }, [id]);
-
-  if (loading) {
+  if (loading || isPending) {
     return (
       <p className="bg-[#101714] py-20 text-center text-white">
         Loading book details...
@@ -139,7 +173,7 @@ const BookDetailsPage = () => {
 
   if (!book) {
     return (
-      <div className="bg-[#101714] py-20 text-center text-white">
+      <div className="min-h-screen bg-[#101714] py-20 text-center text-white">
         <h2 className="text-2xl font-bold">Book Not Found</h2>
 
         <Link href="/books" className="mt-5 inline-block text-[#f6e262]">
@@ -149,11 +183,14 @@ const BookDetailsPage = () => {
     );
   }
 
+
+
+
+
   return (
     <PrivateRoute>
       <main className="min-h-screen bg-[#101714] px-4 py-16 text-white md:px-10 lg:px-20">
         <div className="mx-auto grid max-w-6xl gap-10 rounded-xl border border-white/10 bg-[#19231E] p-6 md:grid-cols-2 md:p-10">
-
           <div>
             <img
               src={book.image}
@@ -171,19 +208,13 @@ const BookDetailsPage = () => {
               {book.title}
             </h1>
 
-            <p className="mt-4 text-gray-400">
-              By {book.author}
-            </p>
+            <p className="mt-4 text-gray-400">By {book.author}</p>
 
             <div className="my-6 h-px bg-white/10"></div>
 
-            <h2 className="mb-3 text-lg font-semibold">
-              About This Book
-            </h2>
+            <h2 className="mb-3 text-lg font-semibold">About This Book</h2>
 
-            <p className="leading-7 text-gray-400">
-              {book.description}
-            </p>
+            <p className="leading-7 text-gray-400">{book.description}</p>
 
             <div className="mt-8 space-y-3 text-sm">
               <p>
@@ -198,7 +229,7 @@ const BookDetailsPage = () => {
 
               <p>
                 <span className="text-gray-400">Added By:</span>{" "}
-                {book.addedBy?.name}
+                {book.addedBy?.name || "BookNook Member"}
               </p>
             </div>
 
@@ -225,18 +256,11 @@ const BookDetailsPage = () => {
         {showBorrowModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
             <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#19231E] p-6">
+              <h2 className="mb-5 text-2xl font-bold">Borrow This Book</h2>
 
-              <h2 className="mb-5 text-2xl font-bold">
-                Borrow This Book
-              </h2>
+              <p className="mb-4 text-gray-400">{book.title}</p>
 
-              <p className="mb-4 text-gray-400">
-                {book.title}
-              </p>
-
-              <label className="mb-2 block text-sm">
-                Return Date
-              </label>
+              <label className="mb-2 block text-sm">Return Date</label>
 
               <input
                 type="date"
